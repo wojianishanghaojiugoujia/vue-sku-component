@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SKU</title>
+	<style>
+	
+	.selected {
+		color: red;
+	}
+
+	</style>
+</head>
+<body>
+	<div id="app">
+		<sku :keys="keys" :values="values"></sku>
+	</div>
+	<script src="js/vue.js"></script>
+	<script src="js/sku_component.js"></script>
+	<script>
+
+		Vue.config.devtools = true
+
+		let keys = {
+			"颜色": {
+				"白色": 1,
+				"红色": 2,
+				"黑色": 3,
+			},
+			"尺寸": {
+				"12寸": 4,
+				"15寸": 5,
+			},
+			"内存": {
+				"64g": 6,
+				"128g": 7,
+			},
+		}
+		let values = {
+			[getPath([1, 4, 6])]: {
+				price: 120,
+				freight: 12,
+				stock: 5000,
+			},
+			[getPath([1, 4, 7])]: {
+				price: 150,
+				freight: 12,
+				stock: 5000,
+			},
+			[getPath([1, 5, 6])]: {
+				price: 150,
+				freight: 15,
+				stock: 5000,
+			},
+		}
+
+		let vue = new Vue({
+			data: {
+				keys,
+				values,
+			},
+			components: {
+				Sku,
+			},
+		}).$mount("#app")
+
+	</script>
+</body>
+</html>
