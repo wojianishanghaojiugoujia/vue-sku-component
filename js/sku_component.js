@@ -54,23 +54,12 @@ let Sku = Vue.extend({
 			let obj = this.skus[this.selPath]
 			return obj && obj.stock || '-'
 		},
-		// 运费范围
-		freight() {
-			let obj = this.skus[this.selPath]
-			let freight = obj && obj.freight
-			if(freight) {
-				let maxFreight = Math.max.apply(Math, freight)
-	            let minFreight = Math.min.apply(Math, freight)
-	            return maxFreight > minFreight ? minFreight + "-" + maxFreight : maxFreight
-			} else {
-				return '-'
-			}
-		},
 		// 核心算法(来源: http://www.cnblogs.com/purediy/archive/2012/12/02/2798454.html)
 		skus() {
+			console.log('sku_computed')
 			let res = {}, addRes = (k, s) => {
-					if(res[k]) res[k].stock += s.stock, res[k].prices.push(s.price), res[k].freight.push(s.freight)
-					else res[k] = {stock: s.stock, prices: [s.price], freight: [s.freight], }
+					if(res[k]) res[k].stock += s.stock, res[k].prices.push(s.price)
+					else res[k] = {stock: s.stock, prices: [s.price], }
 				}, combine = (skas, n, s) => {
 					let len = skas.length
 					skas.forEach((key, i) => {
@@ -90,7 +79,6 @@ let Sku = Vue.extend({
 					}
 					res[getPath(key.split(SKU_SEP))] = {
 						stock:s.stock,
-						freight:[s.freight],
 						prices:[s.price],
 					}
 				}
@@ -113,7 +101,15 @@ let Sku = Vue.extend({
 			let self = this
 			// 过滤已选中的当前选项层的所有属性值的symbol的集合
 			let notSiblingsSelIds = this.selIds.filter(v => v !== symbol).filter(v => Object.values(self.keys[title]).indexOf(v) === -1)
-			return this.skus[getPath(notSiblingsSelIds.concat(symbol))]
+			let sku = this.skus[getPath(notSiblingsSelIds.concat(symbol))]
+			return sku && sku.stock > 0
+		},
+	},
+	watch: {
+		"keys"() {
+			let active = {}
+			Object.keys(this.keys).forEach(key => active[key] = null)
+			this.active = active
 		},
 	},
 	template: `
@@ -121,7 +117,6 @@ let Sku = Vue.extend({
 			<p>选择配置：{{ selOptionsName.join(' + ') || '-' }}</p>
 			<p>选择路径：{{ selPath || '-' }}</p>
 			<p>价格：{{ price }}</p>
-			<p>运费：{{ freight }}</p>
 			<p>库存：{{ stock }}</p>
 			<div v-for="(options, title) in keys">
 				<span>{{ title }}</span>:

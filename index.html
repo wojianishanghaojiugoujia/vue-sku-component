@@ -12,7 +12,42 @@
 </head>
 <body>
 	<div id="app">
-		<sku :keys="keys" :values="values"></sku>
+		<h3>预览</h3>
+		<sku :keys="keys" :values="paths"></sku>
+		<hr>
+		<h3>数据(点击删除)</h3>
+		<div v-for="(title, i) in titles">
+			<span style="cursor: pointer;" @click="delKey(i)">{{ title }}</span>:
+			<span>
+				<button @click="delOption(i, j)" v-for="(name, j) in options[i]">
+					{{ name }}
+				</button>
+				<a @click="addOption(i)" style="cursor: pointer;">添加值</a>
+			</span>
+		</div>
+		<a style="cursor: pointer;" @click="addKey">添加属性</a>
+		<hr>
+		<h3>价格库存配置</h3>
+		<table>
+			<tr>
+				<th>路径</th>
+				<th v-for="title in titles">{{ title }}</th>
+				<th>价格</th>
+				<th>库存</th>
+			</tr>
+			<tr v-for="path in paths">
+				<td>{{ path.symbols.join(SKU_SEP) }}</td>	
+				<td v-for="opt in path.values">
+				{{ opt }}
+				</td>
+				<td>
+					<input v-model="path.price" type="number" step="0.01" />
+				</td>
+				<td>
+					<input v-model="path.stock" type="number"/>
+				</td>
+			</tr>
+		</table>
 	</div>
 	<script src="js/vue.js"></script>
 	<script src="js/sku_component.js"></script>
@@ -20,46 +55,77 @@
 
 		Vue.config.devtools = true
 
-		let keys = {
-			"颜色": {
-				"白色": 1,
-				"红色": 2,
-				"黑色": 3,
-			},
-			"尺寸": {
-				"12寸": 4,
-				"15寸": 5,
-			},
-			"内存": {
-				"64g": 6,
-				"128g": 7,
-			},
-		}
-		let values = {
-			[getPath([1, 4, 6])]: {
-				price: 120,
-				freight: 12,
-				stock: 5000,
-			},
-			[getPath([1, 4, 7])]: {
-				price: 150,
-				freight: 12,
-				stock: 5000,
-			},
-			[getPath([1, 5, 6])]: {
-				price: 150,
-				freight: 15,
-				stock: 5000,
-			},
-		}
-
 		let vue = new Vue({
 			data: {
-				keys,
-				values,
+				titles: ['颜色', '内存', '运营商'],
+				options: [['白色', '黑色', '金色'], ['128g', '64g', '32g', '16g'], ['电信', '联通', '移动']],
+				SKU_SEP,
 			},
 			components: {
 				Sku,
+			},
+			computed: {
+				keys() {
+					let keys = {}
+					let symbol = 0
+					for(let i in this.titles) {
+						let option = {}
+						for(let j in this.options[i]) {
+							option[this.options[i][j]] = symbol++
+						}
+						keys[this.titles[i]] = option
+					}
+					return keys
+				},
+				paths() {
+					let arr = this.titles.map((v, k) => this.options[k].map((l, k) => [this.keys[v][l], l, v, ]))
+					let path = [], paths = {}, len = arr.length
+					let func = (arr, n) => {
+						for(let i of arr[n]) {
+							path.push(i)
+							if(n !== len - 1) {
+								func(arr, n + 1)
+							} else {
+								paths[path.map(v=>v[0]).sort().join(SKU_SEP)] = {
+									stock: 1,
+									price: 1,
+									symbols: path.map(v=>v[0]),
+									values: path.map(v=>v[1]),
+									titles: path.map(v=>v[2]),
+								}
+							}
+							path.pop()
+						}
+					}
+					func(arr, 0)
+					return paths
+				},
+			},
+			methods: {
+				addOption(i) {
+					let name = prompt('请输入属性名')
+					if(name) {
+						this.options[i].push(name)
+					}
+				},
+				delOption(i, j) {
+					if(confirm('确定要删除？')) {
+						this.options[i].splice(j, 1)
+					}
+				},
+				delKey(index) {
+					if(confirm('确定要删除？')) {
+						this.titles.splice(index, 1)
+						this.options.splice(index, 1)
+					}
+				},
+				addKey() {
+					let name = prompt('请输入标题名')
+					if(name) {
+						this.titles.push(name)
+						this.options.push([])
+					}
+				},
 			},
 		}).$mount("#app")
 
